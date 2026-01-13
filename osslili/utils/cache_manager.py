@@ -58,13 +58,20 @@ class CacheManager:
         """
         # Include file modification time in key for invalidation
         path_obj = Path(path)
+        if path_obj.exists() and path_obj.is_file():
+            # Use SHA256 hash of file content
+            hash_obj = hashlib.sha256()
+            with open(path_obj, "rb") as f:
+                for chunk in iter(lambda: f.read(8192), b""):
+                    hash_obj.update(chunk)
+            return hash_obj.hexdigest()
+
+        # For directories or non-existent paths, fall back to path-based hash
         if path_obj.exists():
             mtime = path_obj.stat().st_mtime
             key_str = f"{path}:{mtime}"
         else:
             key_str = path
-
-        # Create hash of the key
         return hashlib.sha256(key_str.encode()).hexdigest()
 
     def _get_cache_file(self, cache_key: str) -> Path:
