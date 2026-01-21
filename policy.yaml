@@ -1,0 +1,209 @@
+policy:
+  name: "OSS Licensing Policy"
+  version: "1.0"
+  status: "active"
+  owner: "legal@open.gov.sg"
+  last_reviewed: "2026-01-21"
+  next_review: "2026-06-21"
+  applies_to:
+    - internal
+    - public-facing
+    - agency-project
+
+scope:
+  languages:
+    - all
+  package_managers:
+    - npm
+    - pnpm
+    - pip
+    - maven
+    - gradle
+    - go
+  artifact_types:
+    - source
+    - binary
+    - container
+
+enforcement:
+  default_action: "fail"   # fail | warn | allow
+  ci_integration: true
+  allow_overrides: true
+  override_requires:
+    - approvals_defined_in_overrides_section
+  override_behavior:
+    pending: "fail"
+    approved: "allow"
+    expired: "fail"
+
+overrides:
+  roles:
+    legal:
+      description: "GT legal Dy Counsel or above"
+    security:
+      description: "OGP SecEng lead or above"
+    policy_owner:
+      description: "OGP Policy lead or above"
+
+  permissions:
+    legal:
+      can_override:
+        - license_deny
+        - license_restrict
+        - non_spdx_license
+    security:
+      can_override:
+        - unknown_license
+        - security_risk_only
+    policy_owner:
+      can_override:
+        - any
+      requires_consultation_with:
+        - legal
+
+
+  approval_matrix:
+    restrict:
+      required_roles:
+        - legal
+        - policy_owner
+      quorum: 2
+
+    deny:
+      required_roles:
+        - legal
+        - security
+        - policy_owner
+      quorum: 3
+
+    non_spdx:
+      required_roles:
+        - legal
+        - policy_owner
+      quorum: 2
+
+  process:
+    required_fields:
+      - justification
+      - scope
+      - duration
+      - approving_roles
+    max_duration_days: 365
+    auto_expire: true
+    audit_log: true
+    reapproval_required_on:
+      - license_change
+      - major_version_upgrade
+
+licenses:
+  allow:
+      description: "Licenses approved for use without additional review."
+      licenses: 
+        - id: "MIT"
+        - id: "LicenseRef-MIT-No-False-Attribution"
+          non_spdx: true
+        - id: "BSD-2-Clause"
+        - id: "BSD-3-Clause"
+        - id: "CC-BY-3.0"
+        - id: "Apache-2.0"
+        - id: "ISC"
+        - id: "LicenseRef-JSON"
+          non_spdx: true
+        - id: "WTFPL"
+        - id: "Python-2.0.1"
+        - id: "Zlib"
+        - id: "W3C-20150513"
+      conditions:
+        - preserve_license_text
+        - preserve_copyright_notices
+        - preserve_warranty_disclaimer
+        - include_attribution_in_distribution
+        - no_endorsement_or_trademark_use
+        - propagate_notice_file_if_present
+        - document_modifications_if_any
+        - comply_with_patent_termination_clause
+
+  restrict:
+    description: "Licenses allowed only if criteria are met with SEM review."
+    licenses:
+      - id: "LGPL-2.1"
+        allowed_if:
+          - "Used as a dynamically linked library"
+          - "No modifications to the licensed code"
+          - "Legal approval required"
+        enforcement: "warn"
+
+      - id: "BSD-4-Clause"
+        allowed_if:
+          - "S.3 Advertising requirement met"
+        enforcement: "warn"
+
+      - id: "EPL-2.0"
+        allowed_if:
+          - "component is used without modification and kept in a separate file"
+        enforcement: "warn"
+        
+      - id: "OFL-1.1"
+        allowed_if:
+          - "use is internal or no modification or incorporation to source code"
+        enforcement: "warn"
+
+  deny:
+    description: "Licenses not permitted unless explicitly approved as an exception."
+    licenses:
+      - id: "GPL-2.0"
+        reason: "Strong copyleft not allowed in internal codebase"
+      - id: "GPL-3.0"
+        reason: "Patent retaliation and distribution requirements"
+      - id: "AGPL-3.0"
+        reason: "Network copyleft triggers disclosure"
+      - id: "LGPL-3.0"
+        reason: "Enhanced copyleft and anti-Tivoization requirements"
+      - id: "CDDL-1.0"
+        reason: "Risks proprietary code disclosure"
+      - id: "CC-BY-SA-4.0"
+        reason: "Share-alike is copyleft"
+      - id: "CC0-1.0-Universal"
+        reason: "Surrender of rights and prohibits sublicensing"
+      - id: "EUPL"
+        reason: "Context-specific and subject to EU jurisdiction"
+      - id: "Hippocratic-2.1"
+        reason: "human rights clauses"
+      - id: "MPL-2.0"
+        reason: "Risks proprietary code disclosure"
+      - id: "no license"
+        non_spdx: true
+        reason: "Use of code is not permitted"
+
+
+exceptions:
+  - license: "GPL-3.0"
+    package: "Plumber"
+    scope: "full-use"
+    approved_by: "legal@tech.gov.sg"
+    notes: "exceptional license due to fork"
+
+unknown_licenses:
+  action: "fail"
+  require_manual_review: true
+
+license_detection:
+  confidence_threshold: 0.9
+  treat_dual_license_as:
+    preference_order:
+      - strong-copyleft
+      - weak-copyleft
+      - permissive
+
+reporting:
+  generate_sbom: true
+  formats:
+    - spdx
+    - cyclonedx
+  include_transitive_dependencies: true
+
+audit:
+  log_decisions: true
+  retain_logs_days: 365
+
+
