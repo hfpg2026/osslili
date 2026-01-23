@@ -706,7 +706,7 @@ class LicenseDetector:
         # Apply false positive filtering to all detected licenses
         filtered_licenses = []
         for license in licenses:
-            if self._is_valid_license_id(license.spdx_id):
+            if self._is_valid_license_id(license.spdx_id) or license.detection_method in [DetectionMethod.TAG]:
                 filtered_licenses.append(license)
             else:
                 logger.debug(f"Filtered out false positive license: '{license.spdx_id}' from {file_path}")
